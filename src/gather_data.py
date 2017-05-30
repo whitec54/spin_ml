@@ -1,9 +1,14 @@
+# Quick and dirty script to gather data from NewsBank using a GVSU student
+# account.
+#
+# Very WIP.
+
 import getpass
 from robobrowser import RoboBrowser
 
 login_url = 'http://ezproxy.gvsu.edu/login?url=http://infoweb.newsbank.com'
 
-
+# Entry point
 def __main__():
 	display_welcome()
 	username, password = get_user_and_pass()
