@@ -33,7 +33,7 @@ class BayesModel():
 		#TODO iterate over training file full of documents and set above
 		#values accordingly 
 
-	def get_label_to_prior(self,label):
+	def get_label_prior(self,label):
 		numer = 0
 		denom = self.doc_count
 
@@ -70,7 +70,7 @@ class BayesModel():
 		max_label = "" 
 
 		for label, count in self.label_to_count:
-			prob = self.label_given_document(label,doc)
+			prob = self.label_given_document(label,doc) * self.get_label_prior(label)
 			if prob > cur_max:
 				cur_max = prob
 				max_label = label
