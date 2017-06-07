@@ -10,6 +10,7 @@ import getpass
 from robobrowser import RoboBrowser
 import re
 from bs4 import BeautifulSoup
+import copy
 
 login_url = 'http://ezproxy.gvsu.edu/login?url=http://infoweb.newsbank.com'
 
@@ -72,25 +73,37 @@ def get_topic_selection(topic_strings):
 def process_topic_selection(selected_topic, browser):
     link_topic = browser.get_link(text=selected_topic)
     browser.follow_link(link_topic)
-    sub_topics_list = browser.find_all(attrs={'class':'heading'})
-    for i in range(0, len(sub_topics_list)):
-        sub_topics_list[i] = strip_html_and_whitespace(str(sub_topics_list[i]))
-    print(sub_topics_list)
-    topic = re.sub(' ', '', sub_topics_list[0])
-    topic = 'list'+(topic)
-    ol_data = browser.find(id=topic)
-    soup = BeautifulSoup(str(ol_data), 'html.parser')
-    link = soup.find('a')
-    browser.follow_link(link)
-    print(strip_html_and_whitespace(str(browser.find('body'))))
-#    for topic in sub_topics_list:
-#        topic = re.sub(' ', '', topic)
-#        topic = 'list'+(topic)
-#        ol_data = browser.find(id=topic)
-#        soup = BeautifulSoup(ol_data, 'html.parser')
-#        link = soup.find('a')
-#        browser.follow_link(link)
-#        print(browser.find('body'))
+    subtopics = browser.find_all(attrs={'class':'heading'})
+    for i in range(0, len(subtopics)):
+        subtopics[i] = strip_html_and_whitespace(str(subtopics[i]))
+    print(subtopics)
+    articles = []
+    for subtopic in subtopics:
+        print(subtopic)
+        subtopic = re.sub(' ', '', subtopic)
+        subtopic = 'list' + subtopic
+        ol_data = browser.find(id=subtopic)
+        print(ol_data)
+        soup = BeautifulSoup(str(ol_data), 'html.parser')
+        links = soup.find_all('a')
+        for link in links:
+            article_browser = copy.copy(browser)
+            article_browser.follow_link(link)
+            body = article_browser.find('body')
+            article = Article(selected_topic, subtopic, body)
+            print(article)
+            articles.append(article)
+    return articles
+
+class Article:
+    topic = ""
+    subtopic = ""
+    body = ""
+
+    def __init__(self, topic, subtopic, body):
+        self.topic = topic
+        self.subtopic = subtopic
+        self.body = body
 
 
 
