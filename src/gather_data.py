@@ -11,17 +11,21 @@ from robobrowser import RoboBrowser
 import re
 from bs4 import BeautifulSoup
 import copy
+import json
 
-login_url = 'http://ezproxy.gvsu.edu/login?url=http://infoweb.newsbank.com'
+LOGIN_URL = 'http://ezproxy.gvsu.edu/login?url=http://infoweb.newsbank.com'
+
+OUTPUT_FILE = 'dumps.json'
 
 # Entry point
 def main():
     display_welcome()
     username, password = get_user_and_pass()
-    browser = login_to_gvsu(username, password, login_url)
+    browser = login_to_gvsu(username, password, LOGIN_URL)
     topic_strings = display_topics(browser)
     selection = get_topic_selection(topic_strings)
-    process_topic_selection(selection, browser)
+    articles = process_topic_selection(selection, browser)
+    convert_to_json(articles)
 
 # Display the welcome message
 def display_welcome():
@@ -83,17 +87,26 @@ def process_topic_selection(selected_topic, browser):
         subtopic = re.sub(' ', '', subtopic)
         subtopic = 'list' + subtopic
         ol_data = browser.find(id=subtopic)
-        print(ol_data)
         soup = BeautifulSoup(str(ol_data), 'html.parser')
         links = soup.find_all('a')
         for link in links:
             article_browser = copy.copy(browser)
             article_browser.follow_link(link)
             body = article_browser.find('body')
+            print(body)
             article = Article(selected_topic, subtopic, body)
-            print(article)
             articles.append(article)
     return articles
+
+# Take a shit
+def convert_to_json(articles):
+    with open(OUTPUT_FILE, 'w') as output:
+        for article in articles:
+            json.dump({"topic": article.topic,
+                       "subtopic": article.subtopic,
+                       "body": str(article.body)},
+                      output)
+
 
 class Article:
     topic = ""
