@@ -65,6 +65,7 @@ def strip_html_and_whitespace(string):
     string = re.sub('\n', '', string)
     string = re.sub('^\s+', '', string)
     string = re.sub('\s+$', '', string)
+    string = re.sub('\s+', ' ', string)
     return string
 
 # Ask the user which topic to download and get their response
@@ -80,30 +81,30 @@ def process_topic_selection(selected_topic, browser):
     subtopics = browser.find_all(attrs={'class':'heading'})
     for i in range(0, len(subtopics)):
         subtopics[i] = strip_html_and_whitespace(str(subtopics[i]))
-    print(subtopics)
     articles = []
     for subtopic in subtopics:
-        print(subtopic)
         subtopic = re.sub(' ', '', subtopic)
         subtopic = 'list' + subtopic
         ol_data = browser.find(id=subtopic)
         soup = BeautifulSoup(str(ol_data), 'html.parser')
         links = soup.find_all('a')
         for link in links:
+            title = strip_html_and_whitespace(str(link))
+            print("Downloading:", title)
             article_browser = copy.copy(browser)
             article_browser.follow_link(link)
             body = article_browser.find('body')
-            print(body)
-            article = Article(selected_topic, subtopic, body)
+            article = Article(selected_topic, subtopic, title, body)
             articles.append(article)
     return articles
 
 # Take a shit
 def convert_to_json(articles):
-    with open(OUTPUT_FILE, 'w') as output:
+    with open(articles[0].topic + ".json", 'w') as output:
         for article in articles:
             json.dump({"topic": article.topic,
                        "subtopic": article.subtopic,
+                       "title": article.title,
                        "body": str(article.body)},
                       output)
 
@@ -113,9 +114,10 @@ class Article:
     subtopic = ""
     body = ""
 
-    def __init__(self, topic, subtopic, body):
+    def __init__(self, topic, subtopic, title, body):
         self.topic = topic
         self.subtopic = subtopic
+        self.title = title
         self.body = body
 
 
