@@ -84,6 +84,7 @@ def process_topic_selection(selected_topic, browser):
     articles = []
     for subtopic in subtopics:
         subtopic = re.sub(' ', '', subtopic)
+        subtopic = re.sub('\'', '', subtopic)
         subtopic = 'list' + subtopic
         ol_data = browser.find(id=subtopic)
         soup = BeautifulSoup(str(ol_data), 'html.parser')
@@ -101,12 +102,11 @@ def process_topic_selection(selected_topic, browser):
 # Take a shit
 def convert_to_json(articles):
     with open(articles[0].topic + ".json", 'w') as output:
+        data = []
         for article in articles:
-            json.dump({"topic": article.topic,
-                       "subtopic": article.subtopic,
-                       "title": article.title,
-                       "body": str(article.body)},
-                      output)
+            data.append({"topic": article.topic, "subtopic": article.subtopic,
+                         "title": article.title, "body": str(article.body)})
+        json.dump(data, output, sort_keys=True, indent=4)
 
 
 class Article:
@@ -119,12 +119,6 @@ class Article:
         self.subtopic = subtopic
         self.title = title
         self.body = body
-
-
-
-
-# Download an article
-#def download_article(article, browser):
 
 # Run main if this file was opened directly
 if __name__ == "__main__":
