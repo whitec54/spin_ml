@@ -1,11 +1,49 @@
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "here is some shit"},
+
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "this is some serious shit"},
+
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "i hate this"},
+
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "this is garbage for real"},
+
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "I can't stand this"},
+
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "this is i hate this shit"},
+
+{"topic": negative,
+"subtopic": article.subtopic,
+"title": NA,
+"body": "i can't stand this trash"},
+
+
+
+
 label negative
-here is some shit
-this is some serious shit
-i hate this 
-this is garbage for real 
-I can't stand this 
-this is i hate this shit 
-i can't stand this trash
+
+
+ 
+ 
+ 
+ 
+
 label positive 
 I love this 
 this is great 

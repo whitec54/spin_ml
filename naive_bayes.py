@@ -10,15 +10,17 @@
 # finish init to actually read data
 # Test something, anything at all 
 
+import json
 
 class Document():
 	def __init__(self,line):
 		self.wordBag = {} #{word:num_instances}
 		self.size = 0
+		line = line.split()
 
 		for word in line:
 			if word in self.wordBag:
-				self.wordBag[word] +=1
+				self.wordBag[word] += 1
 			else:
 				self.wordBag[word] = 1
 
@@ -32,36 +34,31 @@ class Document():
 		return res
 
 class BayesModel():
-	def __init__(self, file):
-		self.doc_count = 0
+	def __init__(self, arr):
+		self.doc_count = len(arr)
 		self.word_count = 0
 		self.label_to_count = {} #{label:num_instances}
 		self.label_to_docs = {} # {label:[documents]}
 
-		for line in file:
+		for obj in arr:
+			label = obj["topic"]
+			doc = Document(obj["body"])
+			self.word_count += doc.size
+			self.count_label(label)
+			self.add_doc(label,doc)
 
-			line = line.split()
-			if line[0] == "label":
-				label = line[1]
-				continue
 
-			self.doc_count+=1
-			self.word_count += len(line)
+	def count_label(self,label):
+		if(label in self.label_to_count):
+			self.label_to_count[label]+=1
+		else:
+			self.label_to_count[label] = 1
 
-			doc = Document(line)
-
-			if(label in self.label_to_count):
-				self.label_to_count[label]+=1
-			else:
-				self.label_to_count[label] = 1
-
-			if label in self.label_to_docs:
-				self.label_to_docs[label].append(doc)
-			else:
-				self.label_to_docs[label] = [doc]
-
-		#TODO iterate over training file full of documents and set above
-		#values accordingly 
+	def add_doc(self,label,doc):
+		if label in self.label_to_docs:
+			self.label_to_docs[label].append(doc)
+		else:
+			self.label_to_docs[label] = [doc]
 
 	def get_label_prior(self,label):
 		numer = 0
@@ -84,14 +81,21 @@ class BayesModel():
 			total_word_matches += doc.get_word_count(word)
 			total_words_in_label += doc.size
 
-		return (float(total_word_matches)+1)/(float(total_words_in_label)+self.word_count)
+		return (float(total_word_matches))/(float(total_words_in_label))
 
 	def label_given_document(self,label,doc):
 		probabity_product = 1
 
 		for word,count in doc.wordBag.items():
 			word_prob = self.word_given_label(word,label) ** count
+
+			#get rid of 0's to not break product with one word 
+			if word_prob == 0:
+				word_prob = 1/self.word_count
+
 			probabity_product *= word_prob
+
+		probabity_product *= self.get_label_prior(label)
 
 		return probabity_product
 
@@ -100,12 +104,21 @@ class BayesModel():
 		max_label = "" 
 
 		for label, count in self.label_to_count.items():
-			prob = self.label_given_document(label,doc) * self.get_label_prior(label)
+			prob = self.label_given_document(label,doc)
 			if prob > cur_max:
 				cur_max = prob
 				max_label = label
 
-		return label
+		return max_label
 
-file = open('test_train.txt','r')
+with open('test_train.json') as data_file:    
+    data = json.load(data_file)
 
+model = BayesModel(data)
+
+
+doc1 = Document("hate shit sue")
+doc2 = Document("love happy bob")
+
+print(model.predict(doc1))
+print(model.predict(doc2))
