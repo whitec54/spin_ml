@@ -34,13 +34,27 @@ class NaiveBayes(Model):
 		correctCount = 0
 		totalCount = len(data)
 
+		pos = 0
+		neg = 0
+		other = 0
+
 		for doc in data:
 			prediction = self.predict(doc)
 			correct = doc[self.y]
 			if(correct == prediction):
 				correctCount += 1
-			
 
+
+			if(prediction == "positive"):
+				pos += 1
+			elif(prediction == "negative"):
+				neg += 1
+			else:
+				other +=1
+			
+		print("pos: " + str(pos))
+		print("neg: " + str(neg))
+		print("other: " + str(other))
 		return correctCount/totalCount
 
 	def gen_label_prob(self):
@@ -94,6 +108,8 @@ class NaiveBayes(Model):
 
 				wordProbProduct *= wordProb
 
+			if(wordProbProduct == 0):
+				wordProbProduct = .001
 			labelGivenDocProb = labelProb * wordProbProduct
 
 
