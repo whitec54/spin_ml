@@ -1,21 +1,25 @@
 from naive_bayes_child import NaiveBayes 
 import json
 
-model = NaiveBayes()
+#imagine body is title. I didn't want to fake more data
+model = NaiveBayes("body","topic")
 
 model.train('test_train.json')
 
 #simulating the json we are dealing with. make a document constructor later
 good_doc = {}
-bad_doc = {}
-bad_doc["body"] = "I hate how much I hate this shit"
-good_doc["body"] ="I love how much I love that I am happy"
+good_doc["body"] ="I love how much I love flowers"
 
-goodExamplePred = model.predict(good_doc)
-badExamplePred = model.predict(bad_doc)
+goodExampleTopic = model.predict(good_doc)
+print("Topic: " + goodExampleTopic)
 
-print("good: " + goodExamplePred)
-print("bad: " + badExamplePred)
+#With X, I want to predict y where TOPIC is goodExampleTopic
+modelSub = NaiveBayes("body","subtopic","topic",goodExampleTopic)
+modelSub.train('test_train.json')
+
+goodExampleSubtopic = modelSub.predict(good_doc)
+
+print("subTopic: " + goodExampleSubtopic)
 
 accuracy = model.test('test_train.json')
 
