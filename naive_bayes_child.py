@@ -1,6 +1,7 @@
 from model import Model 
 import json
 
+
 class NaiveBayes(Model):
 	def __init__(self,X="body",y="topic",keepOnlyParam="",keepOnlyCond=""):
 		self.trainedParameters = {}
@@ -13,13 +14,17 @@ class NaiveBayes(Model):
 		self.keepOnlyParam = keepOnlyParam
 		self.keepOnlyCond = keepOnlyCond
 
-	#this is where all of the computation happen. Predict should do little to no word
+	#this is where all of the computation happen. Predict should do little to no work
 	def train(self,file):
 		with open(file,'r') as trainFile:
 			self.trainData = json.load(trainFile)
 
 		if(self.keepOnlyParam != ""):
 			self.trainData = [doc for doc in self.trainData if doc[self.keepOnlyParam] == self.keepOnlyCond]
+
+		
+		for doc in self.trainData:
+			doc[self.X] = self.clean(doc[self.X])
 
 		self.gen_label_prob()
 		self.gen_label_to_wordbag()
@@ -30,37 +35,23 @@ class NaiveBayes(Model):
 	def test(self,file):
 		with open(file,'r') as testFile:
 			data = json.load(testFile)
+		for doc in data:
+			doc[self.X] = self.clean(doc[self.X])
+
 
 		correctCount = 0
 		totalCount = len(data)
-
-		pos = 0
-		neg = 0
-		other = 0
-
 		for doc in data:
 			prediction = self.predict(doc)
 			correct = doc[self.y]
 			if(correct == prediction):
 				correctCount += 1
 
-
-			if(prediction == "positive"):
-				pos += 1
-			elif(prediction == "negative"):
-				neg += 1
-			else:
-				other +=1
-			
-		print("pos: " + str(pos))
-		print("neg: " + str(neg))
-		print("other: " + str(other))
 		return correctCount/totalCount
 
 	def gen_label_prob(self):
 		docCount = len(self.trainData)
 		labelCount = {}
-
 		for doc in self.trainData:
 			if(doc[self.y] in labelCount):
 				labelCount[doc[self.y]] += 1
@@ -73,9 +64,9 @@ class NaiveBayes(Model):
 
 	def gen_label_to_wordbag(self):
 		labelToWordBag = {}
-
 		for doc in self.trainData:
 			label = doc[self.y]
+
 			if label not in labelToWordBag:
 				labelToWordBag[label] = {}
 				labelToWordBag[label]["totalWordCount"] = 1
@@ -97,32 +88,34 @@ class NaiveBayes(Model):
 		maxLabel = ""
 
 		for label,labelProb in self.trainedParameters["labelProbs"].items():
-			wordProbProduct = 1
-
-			#probably make this a function
-			for word in doc[self.X]:
-				if word in self.trainedParameters["labelToWordBag"][label]:
-					wordProb = self.trainedParameters["labelToWordBag"][label][word]/self.trainedParameters["labelToWordBag"][label]["totalWordCount"]
-				else:
-					wordProb = 1/self.trainedParameters["labelToWordBag"][label]["totalWordCount"]
-
-				wordProbProduct *= wordProb
-
-			if(wordProbProduct == 0):
-				wordProbProduct = .001
-			labelGivenDocProb = labelProb * wordProbProduct
-
-
-			if(labelGivenDocProb > maxProb):
-				maxProb = labelGivenDocProb
+			labelGivenDoc = self.label_given_doc(label,labelProb,doc)
+			if(labelGivenDoc > maxProb):
+				maxProb = labelGivenDoc
 				maxLabel = label
 
 		return maxLabel
 
-	def save_trained_data(self,infileName):
-		super().save_usefull_data(self,infileName)
+	def label_given_doc(self, label,labelProb,doc):
+		wordProbProduct = 1
+		for word in doc[self.X]:
+			if word in self.trainedParameters["labelToWordBag"][label]:
+				wordProb = self.trainedParameters["labelToWordBag"][label][word]/self.trainedParameters["labelToWordBag"][label]["totalWordCount"]
+			else:
+				wordProb = 1/self.trainedParameters["labelToWordBag"][label]["totalWordCount"]
 
-	def write_trained_data(self):
+			wordProbProduct *= wordProb
+
+		if(wordProbProduct == 0): #hacky fix for reaalllyy small decimals going to 0, breaking product
+			wordProbProduct = .001
+
+		return labelProb * wordProbProduct
+
+	def save_trained_data(self):
 		outfileName = self.y +"_trainedOn_"+self.X+".json"
+		super().save_trained_data(outfileName)
 
-		super().write_trained_data(self,outfileName)
+	def load_trained_data(self,infileName):
+		super().load_trained_data(infileName)
+
+	def clean(self,text):
+		return super().clean(text)

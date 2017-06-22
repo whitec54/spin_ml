@@ -1,4 +1,7 @@
 import json
+import string
+from bad_words import badWords
+import re
 
 class Model:
 
@@ -20,10 +23,21 @@ class Model:
 
 
 	def save_trained_data(self,outfileName):
-
 		with open(outfileName, 'w') as outfile:
 			json.dump(self.trainedParameters, outfile)
 
-	def write_trained_data(self,infileName):
+	def load_trained_data(self,infileName):
 		with open(infileName,'r') as infile:
 			self.trainedParameters = json.load(infile)
+
+
+	def clean(self,text):
+		toRemove = badWords()
+
+		cleaned = ' '.join(word.strip(string.punctuation).lower() for word in text.split())#puntcuation, capitals
+		cleaned = re.sub('<.*?>', ' ', cleaned) #html
+		cleaned = cleaned.split()
+		cleaned = [word for word in cleaned if word not in toRemove.words] # useless words
+
+		return cleaned
+
