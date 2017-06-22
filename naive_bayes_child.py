@@ -16,32 +16,17 @@ class NaiveBayes(Model):
 
 	#this is where all of the computation happen. Predict should do little to no work
 	def train(self,file):
-		with open(file,'r') as trainFile:
-			self.trainData = json.load(trainFile)
-
-		if(self.keepOnlyParam != ""):
-			self.trainData = [doc for doc in self.trainData if doc[self.keepOnlyParam] == self.keepOnlyCond]
-
-		
-		for doc in self.trainData:
-			doc[self.X] = self.clean(doc[self.X])
-
-		self.gen_label_prob()
-		self.gen_label_to_wordbag()
-		
-
-		del(self.trainData)
+		trainData = self.load_data(file)		
+		self.gen_label_prob(trainData)
+		self.gen_label_to_wordbag(trainData)
 
 	def test(self,file):
-		with open(file,'r') as testFile:
-			data = json.load(testFile)
-		for doc in data:
-			doc[self.X] = self.clean(doc[self.X])
-
+		data = self.load_data(file)
 
 		correctCount = 0
 		totalCount = len(data)
 		for doc in data:
+			
 			prediction = self.predict(doc)
 			correct = doc[self.y]
 			if(correct == prediction):
@@ -49,10 +34,22 @@ class NaiveBayes(Model):
 
 		return correctCount/totalCount
 
-	def gen_label_prob(self):
-		docCount = len(self.trainData)
+	def load_data(self,file):
+		with open(file,'r') as trainFile:
+			data = json.load(trainFile)
+
+		if(self.keepOnlyParam != ""):
+			data = [doc for doc in data if doc[self.keepOnlyParam] == self.keepOnlyCond]
+	
+		for doc in data:
+			doc[self.X] = self.clean(doc[self.X])
+
+		return data
+
+	def gen_label_prob(self,trainData):
+		docCount = len(trainData)
 		labelCount = {}
-		for doc in self.trainData:
+		for doc in trainData:
 			if(doc[self.y] in labelCount):
 				labelCount[doc[self.y]] += 1
 			else:
@@ -62,9 +59,9 @@ class NaiveBayes(Model):
 			self.trainedParameters["labelProbs"][label] = count/docCount
 
 
-	def gen_label_to_wordbag(self):
+	def gen_label_to_wordbag(self,trainData):
 		labelToWordBag = {}
-		for doc in self.trainData:
+		for doc in trainData:
 			label = doc[self.y]
 
 			if label not in labelToWordBag:
@@ -111,7 +108,7 @@ class NaiveBayes(Model):
 		return labelProb * wordProbProduct
 
 	def save_trained_data(self):
-		outfileName = self.y +"_trainedOn_"+self.X+".json"
+		outfileName = self.y +"_trainedOn_"+self.X+"NBayes.json"
 		super().save_trained_data(outfileName)
 
 	def load_trained_data(self,infileName):
