@@ -135,6 +135,18 @@ class Svm:
 
         plt.show()
 
+    def make_em_n_grams(self, dem_words, dat_n):
+        return zip(*[dem_words[i:] for i in range(dat_n)])
+
+    def make_em_numeric(self, dem_grams):
+
+
+all_o_dem_positive_words = ['orgasmic','pleasureful','sexy','good']
+all_o_dem_negative_words = ['asshole','bitch','dickhead','chode']
+muh_svm = Svm()
+muh_bigrams = muh_svm.make_em_n_grams(all_o_dem_words, 2)
+print(list(muh_bigrams))
+
 data_dict = {-1:np.array([[1,7],
                           [2,8],
                           [3,8],]),
@@ -142,20 +154,27 @@ data_dict = {-1:np.array([[1,7],
              1:np.array([[5,1],
                          [6,-1],
                          [7,3],])}
-
-svm = Support_Vector_Machine()
-svm.fit(data=data_dict)
-
-predict_us = [[0,10],
-              [1,3],
-              [3,4],
-              [3,5],
-              [5,5],
-              [5,6],
-              [6,-5],
-              [5,8]]
-
-for p in predict_us:
-    svm.predict(p)
-
-svm.visualize()
+# data_dict = {-1:np.array([[1,7],
+#                           [2,8],
+#                           [3,8],]),
+#
+#              1:np.array([[5,1],
+#                          [6,-1],
+#                          [7,3],])}
+#
+# svm = Support_Vector_Machine()
+# svm.fit(data=data_dict)
+#
+# predict_us = [[0,10],
+#               [1,3],
+#               [3,4],
+#               [3,5],
+#               [5,5],
+#               [5,6],
+#               [6,-5],
+#               [5,8]]
+#
+# for p in predict_us:
+#     svm.predict(p)
+#
+# svm.visualize()
