@@ -144,16 +144,23 @@ class Svm:
 all_o_dem_positive_words = ['orgasmic','pleasureful','sexy','good']
 all_o_dem_negative_words = ['asshole','bitch','dickhead','chode']
 muh_svm = Svm()
-muh_bigrams = muh_svm.make_em_n_grams(all_o_dem_words, 2)
-print(list(muh_bigrams))
+# muh_bigrams = muh_svm.make_em_n_grams(all_o_dem_words, 2)
+# print(list(muh_bigrams))
 
-data_dict = {-1:np.array([[1,7],
-                          [2,8],
-                          [3,8],]),
+da_vocabz = all_o_dem_negative_words + all_o_dem_positive_words
 
-             1:np.array([[5,1],
-                         [6,-1],
-                         [7,3],])}
+
+
+data_dict = {-1:np.array([[1,2],
+                          [2,1],
+                          [3,1],
+                          [4,3],]),
+
+             1:np.array([[6,2],
+                         [7,2],
+                         [8,4],
+                         [9,3],])}
+
 # data_dict = {-1:np.array([[1,7],
 #                           [2,8],
 #                           [3,8],]),
@@ -161,20 +168,22 @@ data_dict = {-1:np.array([[1,7],
 #              1:np.array([[5,1],
 #                          [6,-1],
 #                          [7,3],])}
-#
-# svm = Support_Vector_Machine()
-# svm.fit(data=data_dict)
-#
-# predict_us = [[0,10],
-#               [1,3],
-#               [3,4],
-#               [3,5],
-#               [5,5],
-#               [5,6],
-#               [6,-5],
-#               [5,8]]
-#
-# for p in predict_us:
-#     svm.predict(p)
-#
+
+svm = Svm()
+svm.fit(data=data_dict)
+# svm.predict([[5,1], [6,1]])
 # svm.visualize()
+#
+predict_us = [[2,1],
+              [1,3],
+              [3,4],
+              [3,5],
+              [5,5],
+              [5,6],
+              [6,5],
+              [5,8]]
+
+for p in predict_us:
+    svm.predict(p)
+
+svm.visualize()
