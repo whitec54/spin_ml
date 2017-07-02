@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 from matplotlib import style
 import numpy as np
+from collections import Counter
+from random import shuffle
 style.use('ggplot')
 
 class Svm:
@@ -138,7 +140,7 @@ class Svm:
     def make_em_n_grams(self, dem_words, dat_n):
         return zip(*[dem_words[i:] for i in range(dat_n)])
 
-    def make_em_numeric(self, dem_grams):
+    #def make_em_numeric(self, dem_grams):
 
 
 all_o_dem_positive_words = ['orgasmic','pleasureful','sexy','good']
@@ -149,31 +151,39 @@ muh_svm = Svm()
 
 da_vocabz = all_o_dem_negative_words + all_o_dem_positive_words
 
+def make_dt_matrix(pos, neg):
+    pos_counts = Counter(pos)
+    neg_counts = Counter(neg)
+    all_words = list(set(list(pos_counts.keys()) + list(neg_counts.keys())))
+    shuffle(all_words)
 
+    pos_list = []
+    neg_list = []
 
-data_dict = {-1:np.array([[1,2],
-                          [2,1],
-                          [3,1],
-                          [4,3],]),
+    for i in range(0,len(all_words)):
+        if all_words[i] in pos_counts:
+            pos_list.append(np.array([i, pos_counts[all_words[i]]]))
 
-             1:np.array([[6,2],
-                         [7,2],
-                         [8,4],
-                         [9,3],])}
+        if all_words[i] in neg_counts:
+            neg_list.append(np.array([i, neg_counts[all_words[i]]]))
 
-# data_dict = {-1:np.array([[1,7],
-#                           [2,8],
-#                           [3,8],]),
+    data_dict = {-1:np.array(neg_list), 1:np.array(pos_list)}
+    return data_dict
+
+data_dict = make_dt_matrix(all_o_dem_positive_words, all_o_dem_negative_words)
+# data_dict = {-1:np.array([[1,1],
+#                           [2,1],
+#                           [3,1],
+#                           [4,1],]),
 #
-#              1:np.array([[5,1],
-#                          [6,-1],
-#                          [7,3],])}
+#              1:np.array([[6,1],
+#                          [7,1],
+#                          [8,1],
+#                          [9,1],])}
 
+print(data_dict)
 svm = Svm()
-svm.fit(data=data_dict)
-# svm.predict([[5,1], [6,1]])
-# svm.visualize()
-#
+svm.fit(data = data_dict)
 predict_us = [[2,1],
               [1,3],
               [3,4],
@@ -187,3 +197,32 @@ for p in predict_us:
     svm.predict(p)
 
 svm.visualize()
+
+
+
+# data_dict = {-1:np.array([[1,7],
+#                           [2,8],
+#                           [3,8],]),
+#
+#              1:np.array([[5,1],
+#                          [6,-1],
+#                          [7,3],])}
+
+# svm = Svm()
+# svm.fit(data=data_dict)
+# svm.predict([[5,1], [6,1]])
+# svm.visualize()
+#
+# predict_us = [[2,1],
+#               [1,3],
+#               [3,4],
+#               [3,5],
+#               [5,5],
+#               [5,6],
+#               [6,5],
+#               [5,8]]
+#
+# for p in predict_us:
+#     svm.predict(p)
+#
+# svm.visualize()
