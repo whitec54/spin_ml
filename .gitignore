@@ -1,2 +1,7 @@
 aclImdb/
 bayes/
+config.py
+getter
+__pychache__
+env/
+__MACOSX/
