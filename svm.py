@@ -118,16 +118,16 @@ class Svm:
         hyp_x_max = datarange[1]
 
         # (w.x+b) = 1
-        # positive support vector hyperplane
-        psv1 = hyperplane(hyp_x_min, self.w, self.b, 1)
-        psv2 = hyperplane(hyp_x_max, self.w, self.b, 1)
-        self.ax.plot([hyp_x_min,hyp_x_max],[psv1,psv2], 'k')
-
-        # (w.x+b) = -1
-        # negative support vector hyperplane
-        nsv1 = hyperplane(hyp_x_min, self.w, self.b, -1)
-        nsv2 = hyperplane(hyp_x_max, self.w, self.b, -1)
-        self.ax.plot([hyp_x_min,hyp_x_max],[nsv1,nsv2], 'k')
+#        # positive support vector hyperplane
+#        psv1 = hyperplane(hyp_x_min, self.w, self.b, 1)
+#        psv2 = hyperplane(hyp_x_max, self.w, self.b, 1)
+#        self.ax.plot([hyp_x_min,hyp_x_max],[psv1,psv2], 'k')
+#
+#        # (w.x+b) = -1
+#        # negative support vector hyperplane
+#        nsv1 = hyperplane(hyp_x_min, self.w, self.b, -1)
+#        nsv2 = hyperplane(hyp_x_max, self.w, self.b, -1)
+#        self.ax.plot([hyp_x_min,hyp_x_max],[nsv1,nsv2], 'k')
 
         # (w.x+b) = 0
         # positive support vector hyperplane
@@ -171,15 +171,13 @@ def make_dt_matrix(pos, neg):
     return data_dict
 
 data_dict = make_dt_matrix(all_o_dem_positive_words, all_o_dem_negative_words)
-# data_dict = {-1:np.array([[1,1],
-#                           [2,1],
-#                           [3,1],
-#                           [4,1],]),
-#
-#              1:np.array([[6,1],
-#                          [7,1],
-#                          [8,1],
-#                          [9,1],])}
+data_dict = {-1:np.array([[1,7],
+                          [2,8],
+                          [3,8],]),
+
+             1:np.array([[5,11],
+                         [6,0],
+                         [7,3],])}
 
 print(data_dict)
 svm = Svm()
