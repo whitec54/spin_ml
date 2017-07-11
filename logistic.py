@@ -1,50 +1,74 @@
-#in ML traditionaly: X = features; y = labels; theta = model parameters; J = cost function 
-
-#todo:
-	# O fix syntax everywhere. this is glorified pseudo code 
-	# O test at all
-	# O make descend itters smarter
-	# X turn into a class
-
 import numpy as np
 import json
 import string 
 import re
 from bad_words import badWords
 from model import Model 
+import math
 
 
 
 class LogisticRegression(Model):
-	def __init__(self,filename,feature_name="body",label_name="topic",ngramLen = 1):
+	def __init__(self,feature_name="body",label_name="topic",ngramLen=1):
 		self.feature_name = feature_name
 		self.label_name = label_name
-
-		self.X,self.y_dict = self.genTrainMatrix(filename,ngramLen)
-
-		self.m,self.n = self.X.shape
-		self.X = np.insert(self.X, 0, 1, axis=1) #add bais col of ones in front
-
-		self.theta = np.zeros((self.n+1,1))
-
+		self.ngramLen = ngramLen
 
 	def train(self,X,y,alpha=.0009,iters = 500000):
-		self.theta = self.descend(X,y,alpha,iters)
+		m,n = X.shape
+		init_theta = np.zeros((n,1))
+		self.theta = self.descend(init_theta,X,y,alpha,iters)
 
 
 	def test(self,X,y):
-		preds = self.predict(X)
+		m,n = X.shape
+		preds = self.matrixPredict(X)
 		bool_array = preds == y
 		correctCount = np.sum(bool_array)
 
-		return correctCount/self.m
+		return correctCount/m
 
-	def predict(self,X):
+	def learningCurve(self,X_train,y_train,X_cv,y_cv,alpha=.0009,iters = 500000):
+		m,n = X_train.shape
+		tenthIters = math.floor(iters/10);
+		dummy_theta = np.zeros((n,1))
+
+		trainCost = self.cost(X_train,y_train,dummy_theta)
+		cvCost = self.cost(X_cv,y_cv,dummy_theta)
+
+		print("Train Cost: "+str(trainCost))
+		print("CV Cost: "+str(cvCost))
+		print()
+
+		for i in range(10):
+			dummy_theta = self.descend(dummy_theta,X_train,y_train,alpha,tenthIters)
+			trainCost = self.cost(X_train,y_train,dummy_theta)
+			cvCost = self.cost(X_cv,y_cv,dummy_theta)
+
+			print("Train Cost: "+str(trainCost))
+			print("CV Cost: "+str(cvCost))
+			print()
+
+	def matrixPredict(self,X):
 		theta = self.theta
 		predsRaw = self.sigmoid(X.dot(theta))
 		preds = np.round(predsRaw)
 
 		return preds
+
+	def docPredict(self,doc):
+		text = doc[self.feature_name]
+		n = len(self.feature_key_vector)
+		textVector = np.zeros([1,n])
+
+		ngrams = super().gen_ngrams(text.split(),self.ngramLen)
+
+		for ngram in ngrams:
+			if(ngram in (self.feature_key_vector)):
+				ind = self.feature_key_vector.index(ngram)
+				textVector[0][ind] += 1
+
+		return self.matrixPredict(textVector)[0][0]
 
 	def sigmoid(self,matrix):
 		matrix = matrix * -1
@@ -68,15 +92,15 @@ class LogisticRegression(Model):
 
 
 	def cost(self,X,y,theta):
+		m,n = X.shape
 		preds = self.sigmoid(X.dot(theta));
 		Err = ((-1 *y) * np.log(preds)) - ((1-y) * np.log(1-preds));
 
 		J = np.sum(Err) / (m);
 		return J
 
-	def descend(self,X,y,alpha,itters):
-		temp_theta = self.theta
-
+	def descend(self,init_theta,X,y,alpha,itters):
+		temp_theta = init_theta
 		for i in range(itters):
 			temp_theta = self.next_theta(X,y,temp_theta,alpha)
 
@@ -85,25 +109,55 @@ class LogisticRegression(Model):
 	#add super call for save
 	#add super call for load. (may need to change json to pickle. idk numpy arrays)
 
-	def clean(self,text):
-		return super().clean(text)
+	def getMatrices(self,filename):
+		return super().getMatrices(filename,self.ngramLen)
 
-	def genTrainMatrix(self,filename,ngramLen=1):
-		return super().genTrainMatrix(filename,ngramLen)
 
-	def getTrainMatrix(self):
-		return self.X,self.y_dict
 
 				
 
 def testLogReg():
-	classifier = LogisticRegression("testdocs.json")
-	X,y_dict = classifier.getTrainMatrix()
+	classifier = LogisticRegression()
+	X_train,X_cv,X_test,y_dict_train,y_dict_cv,y_dict_test = classifier.getMatrices("testdocs.json")
 
-	y = y_dict["positive"]
+	y_train = y_dict_train["positive"]
+	y_cv = y_dict_cv["positive"]
+	y_test = y_dict_test["positive"]
 
-	classifier.train(X,y)
-	accuracy = classifier.test(X,y)
+	print(X_train)
+	print()
+	print(X_cv)
+	print()
+	print(X_test)
+	print()
+	print("***************************************")
+	print()
+	print(y_train)
+	print()
+	print(y_cv)
+	print()
+	print(y_test)
+	print()
+	print("***************************************")
+	print()
+	print(classifier.feature_key_vector)
+	print(classifier.label_key_vector)
+
+	classifier.train(X_train,y_train)
+	accuracy = classifier.test(X_test,y_test)
 	print(accuracy)
+	print()
+	
+	dummy_doc = {
+		"body":"love love love, it's great"
+	}
+	bool_prediction = classifier.docPredict(dummy_doc)
+
+	print("dummy doc test:")
+	print("For body: "+dummy_doc["body"])
+	print("Trained on y_train['positive'] bool prediction is:")
+	print(bool_prediction)
+
+	classifier.learningCurve(X_train,y_train,X_cv,y_cv)
 
 testLogReg()

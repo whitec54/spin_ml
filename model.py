@@ -3,6 +3,7 @@ import string
 from bad_words import badWords
 import re
 import numpy as np
+import math
 
 class Model:
 
@@ -124,7 +125,7 @@ class Model:
 
 		return key_vector,labels
 
-	def genTrainMatrix(self,filename,ngramLen=1):
+	def genWholeMatrices(self,filename,ngramLen=1):
 		with open(filename,'r') as infile:
 			data = json.load(infile)
 
@@ -154,4 +155,53 @@ class Model:
 			cur_label = doc[label_name]
 			y_dict[cur_label][k][0] = 1
 
+		self.label_key_vector = list(labels)
+		self.feature_key_vector = key_vector
 		return X,y_dict
+
+
+	def shuffleUnison(self,X,y_dict):
+		permutation = np.random.permutation(len(X))
+
+		X = X[permutation]
+
+		for label,bool_array in y_dict.items():
+			y_dict[label] = bool_array[permutation]
+
+		return X,y_dict
+
+	def splitX(self,X_whole,m):
+		trainEndInd = math.floor(m*0.6)
+		cvEndInd = math.floor(m*0.8)
+
+		X_train = X_whole[:trainEndInd,:]
+		X_cv = X_whole[trainEndInd:cvEndInd,:]
+		X_test = X_whole[cvEndInd:,:]
+
+		return X_train,X_cv,X_test
+
+	def splitYDict(self,y_dict_whole,m):
+		trainEndInd = math.floor(m*0.6)
+		cvEndInd = math.floor(m*0.8)
+
+		y_dict_train = {}
+		y_dict_cv = {}
+		y_dict_test = {}
+
+		for label,bool_array in y_dict_whole.items():
+			y_dict_train[label] = bool_array[:trainEndInd,:]
+			y_dict_cv[label] = bool_array[trainEndInd:cvEndInd,:]
+			y_dict_test[label] = bool_array[cvEndInd:,:]
+
+		return y_dict_train,y_dict_cv,y_dict_test
+
+	def getMatrices(self,filename,ngramLen=1):
+		X_whole,y_dict_whole = self.genWholeMatrices(filename,ngramLen)
+		
+		X_whole,y_dict_whole = self.shuffleUnison(X_whole,y_dict_whole)
+
+		m,n = X_whole.shape
+		X_train,X_cv,X_test = self.splitX(X_whole,m)
+		y_dict_train,y_dict_cv,y_dict_test = self.splitYDict(y_dict_whole,m)
+
+		return X_train,X_cv,X_test,y_dict_train,y_dict_cv,y_dict_test
