@@ -16,14 +16,24 @@ class LogisticRegression(Model):
 
 	def train(self,X,y,alpha=.0009,iters = 500000):
 		m,n = X.shape
-		init_theta = np.zeros((n,1))
-		self.theta = self.descend(init_theta,X,y,alpha,iters)
+		self.big_theta = np.zeros((n,len(self.label_key_vector)))
+
+		for index,label in enumerate(self.label_key_vector):
+			#slice out cur col
+			cur_little_theta = self.big_theta[:,index]
+			cur_y = y[:,index]
+
+			self.big_theta[:,index] = self.descend(cur_little_theta,X,cur_y,alpha,iters)
 
 
 	def test(self,X,y):
 		m,n = X.shape
 		preds = self.matrixPredict(X)
-		bool_array = preds == y
+		bool_array = np.ones(m, dtype=bool)
+
+		for index in range(m):
+			bool_array[index] = np.array_equal(preds[index], y[index])
+
 		correctCount = np.sum(bool_array)
 
 		return correctCount/m
@@ -49,12 +59,25 @@ class LogisticRegression(Model):
 			print("CV Cost: "+str(cvCost))
 			print()
 
-	def matrixPredict(self,X):
-		theta = self.theta
+	def matrixPredictRaw(self,X):
+		theta = self.big_theta
 		predsRaw = self.sigmoid(X.dot(theta))
-		preds = np.round(predsRaw)
+
+		return predsRaw
+
+	def matrixPredict(self,X):
+		predsRaw = self.matrixPredictRaw(X)
+		maxs = np.argmax(predsRaw,axis = 1)
+
+		m,n = predsRaw.shape
+		preds = np.zeros([m,n])
+
+		for exampleIndex,curMaxInd in enumerate(maxs):
+			preds[exampleIndex][curMaxInd] = 1
 
 		return preds
+
+
 
 	def docPredict(self,doc):
 		text = doc[self.feature_name]
@@ -68,7 +91,9 @@ class LogisticRegression(Model):
 				ind = self.feature_key_vector.index(ngram)
 				textVector[0][ind] += 1
 
-		return self.matrixPredict(textVector)[0][0]
+		confidence_mat = self.matrixPredictRaw(textVector);
+		max_ind = int(np.argmax(confidence_mat,axis=1))
+		return self.label_key_vector[max_ind]
 
 	def sigmoid(self,matrix):
 		matrix = matrix * -1
@@ -118,12 +143,9 @@ class LogisticRegression(Model):
 
 def testLogReg():
 	classifier = LogisticRegression()
-	X_train,X_cv,X_test,y_dict_train,y_dict_cv,y_dict_test = classifier.getMatrices("testdocs.json")
+	X_train,X_cv,X_test,y_train,y_cv,y_test = classifier.getMatrices("testdocs.json")
 
-	y_train = y_dict_train["positive"]
-	y_cv = y_dict_cv["positive"]
-	y_test = y_dict_test["positive"]
-
+	print(classifier.feature_key_vector)
 	print(X_train)
 	print()
 	print(X_cv)
@@ -131,6 +153,7 @@ def testLogReg():
 	print(X_test)
 	print()
 	print("***************************************")
+	print(classifier.label_key_vector)
 	print()
 	print(y_train)
 	print()
@@ -140,8 +163,8 @@ def testLogReg():
 	print()
 	print("***************************************")
 	print()
-	print(classifier.feature_key_vector)
-	print(classifier.label_key_vector)
+	
+	
 
 	classifier.train(X_train,y_train)
 	accuracy = classifier.test(X_test,y_test)
@@ -151,13 +174,14 @@ def testLogReg():
 	dummy_doc = {
 		"body":"love love love, it's great"
 	}
-	bool_prediction = classifier.docPredict(dummy_doc)
 
-	print("dummy doc test:")
-	print("For body: "+dummy_doc["body"])
-	print("Trained on y_train['positive'] bool prediction is:")
-	print(bool_prediction)
+	print(classifier.docPredict(dummy_doc))
 
-	classifier.learningCurve(X_train,y_train,X_cv,y_cv)
+	# print("dummy doc test:")
+	# print("For body: "+dummy_doc["body"])
+	# print("Trained on y_train['positive'] bool prediction is:")
+	# print(bool_prediction)
+
+	#classifier.learningCurve(X_train,y_train,X_cv,y_cv)
 
 testLogReg()

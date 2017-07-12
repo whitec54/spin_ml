@@ -130,6 +130,8 @@ class Model:
 			data = json.load(infile)
 
 		key_vector,labels = self.gen_ngram_key_vector(data,ngramLen)
+		self.label_key_vector = list(labels)
+		self.feature_key_vector = key_vector
 
 		feature_name = self.feature_name
 		label_name = self.label_name
@@ -138,37 +140,40 @@ class Model:
 		n = len(key_vector)
 		X = np.zeros([m,n])
 
-		y_dict = {}
-		for label in labels:
-			y_dict[label] = np.zeros([m,1])
+		#init y examples by num labels 
+		y = np.zeros([m,len(self.label_key_vector)])
 
 		for k,doc in enumerate(data):
 			row = np.zeros(n)
 			words = self.clean(doc[feature_name])
 			ngrams = self.gen_ngrams(words,ngramLen)
+
+			#build X row
 			for ngram in ngrams:
 				if(ngram in (key_vector)):
 					ind = key_vector.index(ngram)
 					row[ind] += 1
 
 			X[k] = row
+
+			#modify y row
 			cur_label = doc[label_name]
-			y_dict[cur_label][k][0] = 1
+			label_index = self.label_key_vector.index(cur_label)
+			y[k][label_index] = 1
 
-		self.label_key_vector = list(labels)
-		self.feature_key_vector = key_vector
-		return X,y_dict
+		
+		return X,y
 
 
-	def shuffleUnison(self,X,y_dict):
+	def shuffleUnison(self,X,y):
+		assert(len(X) == len(y))
 		permutation = np.random.permutation(len(X))
 
 		X = X[permutation]
 
-		for label,bool_array in y_dict.items():
-			y_dict[label] = bool_array[permutation]
+		y = y[permutation]
 
-		return X,y_dict
+		return X,y
 
 	def splitX(self,X_whole,m):
 		trainEndInd = math.floor(m*0.6)
@@ -180,28 +185,24 @@ class Model:
 
 		return X_train,X_cv,X_test
 
-	def splitYDict(self,y_dict_whole,m):
+	def splitYDict(self,y_whole,m):
 		trainEndInd = math.floor(m*0.6)
 		cvEndInd = math.floor(m*0.8)
 
-		y_dict_train = {}
-		y_dict_cv = {}
-		y_dict_test = {}
+		y_train = y_whole[:trainEndInd,:]
+		y_cv = y_whole[trainEndInd:cvEndInd,:]
+		y_test = y_whole[cvEndInd:,:]
 
-		for label,bool_array in y_dict_whole.items():
-			y_dict_train[label] = bool_array[:trainEndInd,:]
-			y_dict_cv[label] = bool_array[trainEndInd:cvEndInd,:]
-			y_dict_test[label] = bool_array[cvEndInd:,:]
-
-		return y_dict_train,y_dict_cv,y_dict_test
+		return y_train,y_cv,y_test
 
 	def getMatrices(self,filename,ngramLen=1):
-		X_whole,y_dict_whole = self.genWholeMatrices(filename,ngramLen)
+		X_whole,y_whole = self.genWholeMatrices(filename,ngramLen)
 		
-		X_whole,y_dict_whole = self.shuffleUnison(X_whole,y_dict_whole)
+		X_whole,y_whole = self.shuffleUnison(X_whole,y_whole)
 
 		m,n = X_whole.shape
 		X_train,X_cv,X_test = self.splitX(X_whole,m)
-		y_dict_train,y_dict_cv,y_dict_test = self.splitYDict(y_dict_whole,m)
 
-		return X_train,X_cv,X_test,y_dict_train,y_dict_cv,y_dict_test
+		y_train,y_cv,y_test = self.splitYDict(y_whole,m)
+
+		return X_train,X_cv,X_test,y_train,y_cv,y_test
